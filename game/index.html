@@ -2,17 +2,22 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#111b28">
-  <title>Skydrift Ridge Run</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#050e1b">
+  <title>Night Trap: Carrier Landing</title>
+  <link rel="icon" href="data:,">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <main class="flight-shell">
-    <canvas id="flight" width="1280" height="720" aria-label="Skydrift Ridge Run flight game"></canvas>
-    <div class="corner-mark"><span class="mark-wing">S</span><span>SKYDRIFT <b>FLIGHT CLUB</b></span></div>
-    <div class="key-hint"><i></i> SYSTEMS NOMINAL</div>
+  <main id="flight-deck">
+    <canvas id="cockpit" width="1280" height="720" tabindex="0" aria-label="Night Trap: Carrier Landing. Press Enter to fly. Arrow keys fly, W and S control throttle. B speedbrake, X wave off, P pause, R restart."></canvas>
+    <p class="screen-reader">Three night carrier landings. Fly the ball, hold 140 knots, catch the third wire. All controls and flight instruments appear inside the cockpit.</p>
   </main>
-  <script type="module" src="src/game.js"></script>
+  <script src="src/sea.js"></script>
+  <script src="src/carrier.js"></script>
+  <script src="src/jet.js"></script>
+  <script src="src/instruments.js"></script>
+  <script src="src/audio.js"></script>
+  <script src="src/game.js"></script>
 </body>
 </html>
