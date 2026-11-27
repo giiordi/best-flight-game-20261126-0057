@@ -1,31 +1,38 @@
-# Alpine Rescue
+# Canyon Rush
 
-A daytime mountain-rescue helicopter game. Fly an orange rescue helicopter over a sunlit alpine valley, hover steady above stranded hikers, lower the winch, lift them aboard, and land soft on the helipad. Canvas 2D art and synthesized WebAudio sound are generated entirely in code. No libraries, downloads, build step or network connection are needed.
+An original sunset air race through a red-rock desert. Fly a cream-and-vermilion stunt prop plane above a winding river, thread illuminated sandstone arches, and bring your aircraft home before the light runs out. All scenery, aircraft, instruments and effects are drawn in Canvas 2D. Sound is synthesized with WebAudio after a user gesture. There are no external assets, dependencies, downloads or build steps.
 
 ## Play
 
-Serve `game/` with any static web server and open `index.html` in a desktop browser. Enter or click begins the rescue. Fly three missions, then review the grades and total score. Only the best score uses localStorage; storage is optional.
+Serve `game/` with any static server and open its `index.html` in a desktop browser. The canvas uses a 1280 × 720 logical resolution and scales to fit the window. Press Enter or click to take off.
 
-- **W / S:** collective — climb / descend.
-- **A / D:** cyclic — slide left / right.
-- **Space:** hold to lower the winch, release to lift a hooked hiker aboard.
-- **P:** pause. **R:** restart the campaign.
-- **Enter / click:** start, continue to the next mission, or fly again.
+- **W / Up:** climb. **S / Down:** descend.
+- **A / Left** and **D / Right:** bank and steer with momentum.
+- **Shift:** spend limited boost. Illuminated boost arches replenish the meter.
+- **Mouse:** hold and drag to bank and pitch; release to center the controls.
+- **P:** pause or resume. **R:** restart the whole race. **M:** mute sound.
+- **Enter / click:** advance between courses, resume, or race again.
 
-## Three missions
+Steady wings build speed; hard banking and climbs bleed it. Each successful arch earns 500 points. A boost gate adds 250 and refills boost. Passing close to an arch's inside edge earns a 350-point near-miss bonus. Missed arches cost four seconds. Wall clips cost 25 hull; scrapes cost 10. Zero hull or an expired timer ends the sortie. Aircraft and boost are restored between courses.
 
-1. **First Call:** calm air, one hiker on the east ledge, full fuel. Learn the hover.
-2. **Gusting Ridge:** steady crosswind plus gusts. Hold your hover over the ledge.
-3. **Last Light:** half fuel, stronger gusts, two hikers, and dusk is falling.
+## Courses
 
-A pickup only locks when the hook is at the hiker and the hover is steady (low speed in both axes). A hiker on the hook follows the winch; release Space to lift them aboard. Landing points combine mission time, hover steadiness, fuel left and landing softness. A hard landing or a mountain strike crashes the helicopter and retries the mission. Fuel exhaustion leaves only autorotation: cyclic still works, collective does not.
+1. **Dusk Run:** ten wide arches, gentle bends and light wind. Find your line.
+2. **Needle Gap:** twelve tighter arches and gusting crosswinds. Trust the bank.
+3. **Golden Hour:** fourteen narrow arches, the strongest gusts, faster flight and fading light. Outrun the sun.
 
-## Capture hooks
+Finish the three courses to receive a debrief with each course's time, arches, near misses, hull, grade and score. Scores combine arch points, bonuses, remaining time and hull. Grades reward accuracy, aircraft preservation and pace. Only the best total score is stored, with `localStorage`; blocked storage never prevents play.
 
-`?shot=start&seed=7`, `?shot=play&seed=7` and `?shot=end&seed=7` present stable title, hover-over-hiker and example debrief renders. The play hook holds its pose until flight input or click. The end hook is a representative completed rescue and never updates the saved best score. Normal play begins at the title screen.
+## Deterministic screenshot views
 
-`main.ts` copies the game and the locally supplied screenshots into `MAKEFUN_OUTPUT_DIR` (default `/output`) and builds the dossier with the unchanged kit library. Screenshot capture and competition submission are handled separately.
+- `?shot=start&seed=7`: sunset title screen.
+- `?shot=play&seed=7`: frozen mid-course boost-gate flight with instruments and trails.
+- `?shot=end&seed=7`: debrief preview with explicit demonstration result rows.
 
-Built for make.fun. Referral code: **v0wjehd6**.
+The screenshot views use a fixed scene time. They do not save sample scores. Enter or click returns to interactive play; `R` starts a fresh race. Without `shot`, the game starts normally on the title screen. `seed` controls the scenery and gust phases.
 
-MIT licensed; see LICENSE.
+## Hand-in
+
+`main.ts` uses Node 22.18+ standard-library APIs to copy `game/` and `screenshots/` to `MAKEFUN_OUTPUT_DIR` (default `/output`) and generate `dossier.json` using the unchanged kit vendor helper. Run `MAKEFUN_OUTPUT_DIR=/tmp/canyon-rush-output node main.ts`. The local submission operator must replace the previous round's screenshots with real Canyon Rush browser captures before the final hand-in. Screenshot production and submission are outside this build session's scope.
+
+MIT licensed; see `LICENSE`. make.fun referral code: **v0wjehd6**.

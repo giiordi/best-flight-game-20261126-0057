@@ -1,79 +1,64 @@
-(function () {
-  'use strict';
-  // Tiny WebAudio synth — every sound generated in code, no audio files.
-  // Nothing starts until the first user gesture calls ensure().
-  var ctx = null, master = null, rotorNodes = null, winchNodes = null, lastBeep = 0;
-
-  function ensure() {
-    if (ctx) { if (ctx.state === 'suspended') ctx.resume(); return true; }
-    try {
-      var AC = window.AudioContext || window.webkitAudioContext;
-      if (!AC) return false;
-      ctx = new AC();
-      master = ctx.createGain();
-      master.gain.value = 0.4;
-      master.connect(ctx.destination);
-      return true;
-    } catch (e) { return false; }
-  }
-  function tone(freq, dur, type, vol, when) {
-    if (!ctx) return;
-    var t0 = ctx.currentTime + (when || 0);
-    var o = ctx.createOscillator(), g = ctx.createGain();
-    o.type = type || 'sine'; o.frequency.value = freq;
-    g.gain.setValueAtTime(0, t0);
-    g.gain.linearRampToValueAtTime(vol, t0 + 0.012);
-    g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
-    o.connect(g); g.connect(master);
-    o.start(t0); o.stop(t0 + dur + 0.05);
-  }
-  // Rotor whomp-whomp; rate follows collective (0..1). Call every frame.
-  function rotor(collective, flying) {
-    if (!ctx) return;
-    if (!flying || collective <= 0) { stopRotor(); return; }
-    if (!rotorNodes) {
-      var o = ctx.createOscillator(), g = ctx.createGain(), lfo = ctx.createOscillator(), lg = ctx.createGain();
-      o.type = 'sawtooth'; o.frequency.value = 46 + collective * 14;
-      lfo.frequency.value = 7 + collective * 6; lg.gain.value = 0.05;
-      lfo.connect(lg); lg.connect(g.gain);
-      g.gain.value = 0.09;
-      o.connect(g); g.connect(master);
-      o.start(); lfo.start();
-      rotorNodes = { o: o, g: g, lfo: lfo };
+/* Oscillators, envelopes and a generated noise buffer; nothing is loaded from disk. */
+'use strict';
+(() => {
+  class FlightAudio {
+    constructor() { this.context = null; this.muted = false; }
+    start() {
+      if (this.context) { this.context.resume().catch(() => {}); return; }
+      const Audio = window.AudioContext || window.webkitAudioContext;
+      if (!Audio) return;
+      try {
+        const a = this.context = new Audio();
+        this.master = a.createGain(); this.master.gain.value = .25; this.master.connect(a.destination);
+        this.engineGain = a.createGain(); this.engineGain.gain.value = 0; this.engineGain.connect(this.master);
+        const filter = a.createBiquadFilter(); filter.type = 'lowpass'; filter.frequency.value = 420; filter.connect(this.engineGain);
+        this.engine = a.createOscillator(); this.engine.type = 'sawtooth'; this.engine.frequency.value = 65; this.engine.connect(filter); this.engine.start();
+        this.harmonic = a.createOscillator(); this.harmonic.type = 'triangle'; this.harmonic.frequency.value = 131; this.harmonic.connect(filter); this.harmonic.start();
+        this.noise = a.createBuffer(1, a.sampleRate, a.sampleRate);
+        const channel = this.noise.getChannelData(0);
+        let v = 773;
+        for (let i = 0; i < channel.length; i++) { v = (v * 16807) % 2147483647; channel[i] = v / 1073741824 - 1; }
+        this.roar = a.createBufferSource(); this.roar.buffer = this.noise; this.roar.loop = true;
+        this.roarGain = a.createGain(); this.roarGain.gain.value = 0;
+        const roarFilter = a.createBiquadFilter(); roarFilter.type = 'lowpass'; roarFilter.frequency.value = 680;
+        this.roar.connect(roarFilter); roarFilter.connect(this.roarGain); this.roarGain.connect(this.master); this.roar.start();
+        a.resume().catch(() => {});
+      } catch (_) { this.context = null; }
     }
-    rotorNodes.o.frequency.value = 46 + collective * 14;
-    rotorNodes.lfo.frequency.value = 7 + collective * 6;
-  }
-  function stopRotor() {
-    if (!rotorNodes) return;
-    try { rotorNodes.o.stop(); rotorNodes.lfo.stop(); } catch (e) {}
-    rotorNodes = null;
-  }
-  function winch(on) {
-    if (!ctx) return;
-    if (!on) {
-      if (winchNodes) { try { winchNodes.o.stop(); winchNodes.lfo.stop(); } catch (e) {} winchNodes = null; }
-      return;
+    toggle() {
+      this.muted = !this.muted;
+      if (this.context) this.master.gain.setTargetAtTime(this.muted ? 0 : .25, this.context.currentTime, .1);
     }
-    if (winchNodes) return;
-    var o = ctx.createOscillator(), g = ctx.createGain(), lfo = ctx.createOscillator(), lg = ctx.createGain();
-    o.type = 'sine'; o.frequency.value = 880;
-    lfo.frequency.value = 28; lg.gain.value = 22;
-    lfo.connect(lg); lg.connect(o.frequency);
-    g.gain.value = 0.045;
-    o.connect(g); g.connect(master);
-    o.start(); lfo.start();
-    winchNodes = { o: o, lfo: lfo };
+    update(plane, flying) {
+      const a = this.context; if (!a) return;
+      this.engine.frequency.setTargetAtTime(37 + plane.speed * .32 + (plane.boosting ? 15 : 0), a.currentTime, .12);
+      this.harmonic.frequency.setTargetAtTime(75 + plane.speed * .64, a.currentTime, .12);
+      this.engineGain.gain.setTargetAtTime(flying ? .13 : .015, a.currentTime, .25);
+      this.roarGain.gain.setTargetAtTime(flying && plane.boosting ? .13 : 0, a.currentTime, .12);
+    }
+    tone(frequency, duration, delay = 0, type = 'sine', volume = .2) {
+      const a = this.context; if (!a) return;
+      const t = a.currentTime + delay, o = a.createOscillator(), e = a.createGain();
+      o.type = type; o.frequency.setValueAtTime(frequency, t);
+      e.gain.setValueAtTime(0, t); e.gain.linearRampToValueAtTime(volume, t + .009); e.gain.exponentialRampToValueAtTime(.001, t + duration);
+      o.connect(e); e.connect(this.master); o.start(t); o.stop(t + duration + .02);
+    }
+    noiseBurst(duration, frequency, volume) {
+      const a = this.context; if (!a || !this.noise) return;
+      const n = a.createBufferSource(), f = a.createBiquadFilter(), e = a.createGain();
+      n.buffer = this.noise; f.type = 'bandpass'; f.frequency.value = frequency;
+      e.gain.setValueAtTime(volume, a.currentTime); e.gain.exponentialRampToValueAtTime(.001, a.currentTime + duration);
+      n.connect(f); f.connect(e); e.connect(this.master); n.start(); n.stop(a.currentTime + duration);
+    }
+    effect(name) {
+      if (!this.context || this.muted) return;
+      if (name === 'arch') { this.tone(660, .18); this.tone(990, .24, .07); }
+      if (name === 'near') this.noiseBurst(.45, 1600, .4);
+      if (name === 'scrape') { this.noiseBurst(.3, 480, .6); this.tone(80, .25, 0, 'sawtooth', .18); }
+      if (name === 'crash') { this.noiseBurst(.7, 110, .8); this.tone(48, .8, 0, 'triangle', .65); }
+      if (name === 'click') this.tone(420, .08, 0, 'triangle', .15);
+      if (name === 'finish') [440, 554, 660, 880].forEach((f, i) => this.tone(f, .4, i * .11));
+    }
   }
-  function chime() { tone(880, 0.16, 'sine', 0.22); tone(1318, 0.22, 'sine', 0.2, 0.1); }
-  function beep() {
-    if (!ctx) return;
-    var now = ctx.currentTime;
-    if (now - lastBeep < 0.9) return;
-    lastBeep = now;
-    tone(1250, 0.07, 'square', 0.12);
-  }
-  function thud() { tone(65, 0.3, 'sine', 0.5); tone(42, 0.22, 'triangle', 0.35, 0.02); }
-  function click() { tone(1800, 0.035, 'square', 0.08); }
-  window.AlpineAudio = { ensure: ensure, rotor: rotor, stopRotor: stopRotor, winch: winch, chime: chime, beep: beep, thud: thud, click: click };
+  window.CR.FlightAudio = FlightAudio;
 })();

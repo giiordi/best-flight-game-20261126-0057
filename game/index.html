@@ -3,18 +3,20 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#9ed9eb">
-  <title>Alpine Rescue</title>
+  <meta name="theme-color" content="#241923">
+  <meta name="description" content="Canyon Rush — a sunset air race through the red-rock wilderness.">
+  <title>Canyon Rush · Sunset Air Racing</title>
+  <link rel="icon" href="data:,">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <main id="game-shell" aria-label="Alpine Rescue flight game">
-    <canvas id="flight-canvas" width="1280" height="720" aria-label="Mountain rescue flight scene"></canvas>
-    <div id="screen-reader" aria-live="polite"></div>
+  <main id="flight-deck" aria-label="Canyon Rush flight game">
+    <canvas id="flight" width="1280" height="720" tabindex="0" aria-label="Canyon Rush. Enter to fly. Arrow keys or WASD steer and pitch; Shift boosts; P pauses; R restarts."></canvas>
+    <span class="sr-only" id="flight-status" aria-live="polite">Ready to fly. Press Enter.</span>
   </main>
-  <script src="src/mountain.js"></script>
-  <script src="src/heli.js"></script>
-  <script src="src/rescue.js"></script>
+  <script src="src/canyon.js"></script>
+  <script src="src/plane.js"></script>
+  <script src="src/race.js"></script>
   <script src="src/instruments.js"></script>
   <script src="src/audio.js"></script>
   <script src="src/game.js"></script>
