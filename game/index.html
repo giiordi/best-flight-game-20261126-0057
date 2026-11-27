@@ -2,20 +2,19 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="theme-color" content="#050e1b">
-  <title>Night Trap: Carrier Landing</title>
-  <link rel="icon" href="data:,">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#9ed9eb">
+  <title>Alpine Rescue</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <main id="flight-deck">
-    <canvas id="cockpit" width="1280" height="720" tabindex="0" aria-label="Night Trap: Carrier Landing. Press Enter to fly. Arrow keys fly, W and S control throttle. B speedbrake, X wave off, P pause, R restart."></canvas>
-    <p class="screen-reader">Three night carrier landings. Fly the ball, hold 140 knots, catch the third wire. All controls and flight instruments appear inside the cockpit.</p>
+  <main id="game-shell" aria-label="Alpine Rescue flight game">
+    <canvas id="flight-canvas" width="1280" height="720" aria-label="Mountain rescue flight scene"></canvas>
+    <div id="screen-reader" aria-live="polite"></div>
   </main>
-  <script src="src/sea.js"></script>
-  <script src="src/carrier.js"></script>
-  <script src="src/jet.js"></script>
+  <script src="src/mountain.js"></script>
+  <script src="src/heli.js"></script>
+  <script src="src/rescue.js"></script>
   <script src="src/instruments.js"></script>
   <script src="src/audio.js"></script>
   <script src="src/game.js"></script>
